@@ -16,6 +16,10 @@ func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
 	log.Println("Derp")
 
+	url, err := mamexml.GetGithubDownloadUrl()
+	check(err)
+	log.Println(url)
+
 	filename := "E:\\temp\\rom\\mame0177.xml"
 
 	machines, err := mamexml.Load(filename)
