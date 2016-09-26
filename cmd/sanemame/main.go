@@ -14,7 +14,7 @@ func check(e error) {
 }
 
 func main() {
-	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
+	log.SetFlags(0)
 
 	config.SetupConfig()
 

@@ -8,7 +8,7 @@ import (
 import "github.com/spf13/viper"
 
 const MameRepo = "mame.repo"
-const GithubReleaseApi = "github.api.release"
+const GithubReleasesApi = "github.api.releases"
 
 func SetupConfig() {
 	viper.SetConfigType("yaml")
@@ -23,5 +23,5 @@ func SetupConfig() {
 	}
 
 	viper.SetDefault(MameRepo, "mamedev/mame")
-	viper.SetDefault(GithubReleaseApi, "https://api.github.com/repos/%s/releases")
+	viper.SetDefault(GithubReleasesApi, "https://api.github.com/repos/%s/releases")
 }

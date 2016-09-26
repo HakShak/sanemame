@@ -35,7 +35,7 @@ type Release struct {
 func GetReleases() ([]Release, error) {
 	startTime := time.Now()
 	mameRepo := viper.GetString(config.MameRepo)
-	githubApi := viper.GetString(config.GithubReleaseApi)
+	githubApi := viper.GetString(config.GithubReleasesApi)
 	url := fmt.Sprintf(githubApi, mameRepo)
 	log.Printf("Getting releases from %s", url)
 	resp, err := http.Get(url)
