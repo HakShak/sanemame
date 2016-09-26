@@ -31,6 +31,11 @@ type Machine struct {
 	SampleOf     string `xml:"sampleof,attr"`
 }
 
+func GetMachines() (interface{}, error) {
+
+	return nil, nil
+}
+
 func Load(filename string) (map[string]Machine, error) {
 	startTime := time.Now()
 	log.Printf("Loading %s", filename)

@@ -4,8 +4,8 @@ import "testing"
 
 import "strings"
 
-func TestGetGithubReleases(t *testing.T) {
-	releases, err := GetGithubReleases()
+func TestGetReleases(t *testing.T) {
+	releases, err := GetReleases()
 	if err != nil {
 		t.FailNow()
 	}
@@ -21,17 +21,6 @@ func TestGetGithubReleases(t *testing.T) {
 	}
 
 	if len(releases[0].Assets) == 0 {
-		t.FailNow()
-	}
-}
-
-func TestGetGithubDownloadUrl(t *testing.T) {
-	url, err := GetGithubDownloadUrl()
-	if err != nil {
-		t.FailNow()
-	}
-
-	if url == "" {
 		t.FailNow()
 	}
 }

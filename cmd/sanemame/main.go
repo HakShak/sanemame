@@ -5,6 +5,7 @@ import (
 )
 
 import "github.com/HakShak/sanemame/mamexml"
+import "github.com/HakShak/sanemame/config"
 
 func check(e error) {
 	if e != nil {
@@ -14,13 +15,13 @@ func check(e error) {
 
 func main() {
 	log.SetFlags(log.Lmicroseconds | log.Lshortfile)
-	log.Println("Derp")
 
-	url, err := mamexml.GetGithubDownloadUrl()
-	check(err)
-	log.Println(url)
+	config.SetupConfig()
 
-	filename := "E:\\temp\\rom\\mame0177.xml"
+	filename, err := mamexml.GetLatestXmlFile()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	machines, err := mamexml.Load(filename)
 	check(err)

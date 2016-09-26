@@ -1,0 +1,5 @@
+mame:
+  repo: mamedev/mame
+github:
+  api:
+    release: https://api.github.com/repos/%s/releases
