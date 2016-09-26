@@ -30,36 +30,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mature := 0
-
-	for _, value := range categories {
-		if value.Mature {
-			mature += 1
-		}
-
-	}
-
-	log.Printf("Categorizations: %d", len(categories))
-	log.Printf("Mature: %d", mature)
+	log.Printf("Categorized: %d", len(categories))
 
 	nplayers, err := mamexml.LoadNPlayersIni("nplayers.ini")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	nPlayerCount := 0
-	nPlayerUnknown := 0
-
-	for _, value := range nplayers {
-		if value[0].Players > 0 {
-			nPlayerCount += 1
-		} else {
-			nPlayerUnknown += 1
-		}
-	}
-
-	log.Printf("Known NPlayers: %d", nPlayerCount)
-	log.Printf("Unknown NPlayers: %d", nPlayerUnknown)
+	log.Printf("NPlayers: %d", len(nplayers))
 
 	filename, err := mamexml.GetLatestXmlFile()
 	if err != nil {
