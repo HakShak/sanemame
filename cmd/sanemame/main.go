@@ -18,6 +18,25 @@ func main() {
 
 	config.SetupConfig()
 
+	nplayers, err := mamexml.LoadNPlayersIni("nplayers.ini")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nPlayerCount := 0
+	nPlayerUnknown := 0
+
+	for _, value := range nplayers {
+		if value[0].Players > 0 {
+			nPlayerCount += 1
+		} else {
+			nPlayerUnknown += 1
+		}
+	}
+
+	log.Printf("Known NPlayers: %d", nPlayerCount)
+	log.Printf("Unknown NPlayers: %d", nPlayerUnknown)
+
 	filename, err := mamexml.GetLatestXmlFile()
 	if err != nil {
 		log.Fatal(err)
