@@ -18,6 +18,24 @@ func main() {
 
 	config.SetupConfig()
 
+	categories, err := mamexml.LoadCatverIni("Catver.ini")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mature := 0
+
+	for _, value := range categories {
+		if value.Mature {
+			mature += 1
+			log.Printf("%q", value)
+		}
+
+	}
+
+	log.Printf("Categories: %d", len(categories))
+	log.Printf("Mature: %d", mature)
+
 	nplayers, err := mamexml.LoadNPlayersIni("nplayers.ini")
 	if err != nil {
 		log.Fatal(err)

@@ -38,6 +38,7 @@ func getPlayerType(value string) ([]NPlayer, error) {
 }
 
 func LoadNPlayersIni(fileName string) (map[string][]NPlayer, error) {
+	log.Printf("Loading %s", fileName)
 	startTime := time.Now()
 	file, err := ini.LoadFile(fileName)
 	if err != nil {
