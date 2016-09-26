@@ -18,6 +18,13 @@ func main() {
 
 	config.SetupConfig()
 
+	controls, err := mamexml.LoadControlsXml("controls.xml")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Controls: %d", len(controls))
+
 	categories, err := mamexml.LoadCatverIni("Catver.ini")
 	if err != nil {
 		log.Fatal(err)
@@ -28,12 +35,11 @@ func main() {
 	for _, value := range categories {
 		if value.Mature {
 			mature += 1
-			log.Printf("%q", value)
 		}
 
 	}
 
-	log.Printf("Categories: %d", len(categories))
+	log.Printf("Categorizations: %d", len(categories))
 	log.Printf("Mature: %d", mature)
 
 	nplayers, err := mamexml.LoadNPlayersIni("nplayers.ini")
