@@ -6,8 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"time"
 )
+
+import "gopkg.in/cheggaaa/pb.v1"
 
 type Driver struct {
 	Status string `xml:"status,attr"`
@@ -37,16 +38,25 @@ func GetMachines() (interface{}, error) {
 }
 
 func Load(filename string) (map[string]Machine, error) {
-	startTime := time.Now()
 	log.Printf("Loading %s", filename)
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	bar := pb.New(int(info.Size())).SetUnits(pb.U_BYTES).SetWidth(80).Start()
+	bar.ShowSpeed = true
+
 	bufReader := bufio.NewReader(file)
 
-	decoder := xml.NewDecoder(bufReader)
+	proxyReader := bar.NewProxyReader(bufReader)
+
+	decoder := xml.NewDecoder(proxyReader)
 
 	loaded := make(map[string]Machine)
 
@@ -101,6 +111,6 @@ func Load(filename string) (map[string]Machine, error) {
 		}
 	}
 
-	log.Printf("%s loaded in %s", filename, time.Since(startTime))
+	bar.Finish()
 	return loaded, nil
 }

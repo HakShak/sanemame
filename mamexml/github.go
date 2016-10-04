@@ -14,13 +14,13 @@ import (
 )
 
 import "github.com/spf13/viper"
-
+import "gopkg.in/cheggaaa/pb.v1"
 import "github.com/HakShak/sanemame/config"
 
 type Asset struct {
 	Name        string `json:"name"`
 	ContentType string `json:"content_type"`
-	Size        int64  `json:"size"`
+	Size        int    `json:"size"`
 	Created     string `json:"created_at"`
 	Updated     string `json:"updated_at"`
 	Url         string `json:"browser_download_url"`
@@ -89,8 +89,7 @@ func GetLatestXmlAsset() (*Asset, error) {
 	return nil, nil
 }
 
-func Download(fileName string, url string) error {
-	startTime := time.Now()
+func Download(fileName string, url string, size int) error {
 	log.Printf("Creating %s", fileName)
 	out, err := os.Create(fileName)
 	if err != nil {
@@ -99,25 +98,26 @@ func Download(fileName string, url string) error {
 	defer out.Close()
 
 	log.Printf("Downloading %s", url)
+	bar := pb.New(size).SetUnits(pb.U_BYTES).SetWidth(80).Start()
+	bar.ShowSpeed = true
 	response, err := http.Get(url)
 	if err != nil {
 		return nil
 	}
 	defer response.Body.Close()
 
-	_, err = io.Copy(out, response.Body)
+	proxyReader := bar.NewProxyReader(response.Body)
+
+	_, err = io.Copy(out, proxyReader)
 	if err != nil {
 		return err
 	}
-
-	log.Printf("Downloaded %s in %s", fileName, time.Since(startTime))
+	bar.Finish()
 
 	return nil
 }
 
 func ExtractAsset(zipFileName string) (string, error) {
-	startTime := time.Now()
-	log.Printf("Extracing %s", zipFileName)
 	zipReader, err := zip.OpenReader(zipFileName)
 	if err != nil {
 		return "", err
@@ -126,11 +126,15 @@ func ExtractAsset(zipFileName string) (string, error) {
 
 	for _, file := range zipReader.File {
 		log.Printf("Extracting file: %s", file.Name)
+		bar := pb.New(int(file.UncompressedSize64)).SetUnits(pb.U_BYTES).SetWidth(80).Start()
+		bar.ShowSpeed = true
 		contentReader, err := file.Open()
 		if err != nil {
 			return "", err
 		}
 		defer contentReader.Close()
+
+		proxyReader := bar.NewProxyReader(contentReader)
 
 		extractedFile, err := os.Create(file.Name)
 		if err != nil {
@@ -138,12 +142,13 @@ func ExtractAsset(zipFileName string) (string, error) {
 		}
 		defer extractedFile.Close()
 
-		_, err = io.Copy(extractedFile, contentReader)
+		_, err = io.Copy(extractedFile, proxyReader)
 		if err != nil {
 			return "", err
 		}
 
-		log.Printf("Extracted %s in %s", file.Name, time.Since(startTime))
+		bar.Finish()
+
 		return file.Name, nil
 	}
 
@@ -157,7 +162,7 @@ func GetLatestXmlFile() (string, error) {
 	}
 
 	if _, err := os.Stat(asset.Name); os.IsNotExist(err) {
-		err := Download(asset.Name, asset.Url)
+		err := Download(asset.Name, asset.Url, asset.Size)
 		if err != nil {
 			return "", err
 		}
@@ -167,7 +172,7 @@ func GetLatestXmlFile() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if fileInfo.Size() != asset.Size {
+	if fileInfo.Size() != int64(asset.Size) {
 		return "", errors.New("File sizes do not match")
 	}
 

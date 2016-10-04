@@ -1,13 +1,15 @@
 package mamexml
 
 import (
+	"bufio"
 	"log"
+	"os"
 	"regexp"
 	"strings"
-	"time"
 )
 
 import "github.com/vaughan0/go-ini"
+import "gopkg.in/cheggaaa/pb.v1"
 
 type Category struct {
 	Raw       string
@@ -53,15 +55,31 @@ func getCategory(value string) (*Category, error) {
 
 func LoadCatverIni(fileName string) (map[string]Category, error) {
 	log.Printf("Loading %s", fileName)
-	startTime := time.Now()
-	file, err := ini.LoadFile(fileName)
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	bar := pb.New(int(info.Size())).SetUnits(pb.U_BYTES).SetWidth(80).Start()
+	bar.ShowSpeed = true
+
+	bufReader := bufio.NewReader(file)
+
+	proxyReader := bar.NewProxyReader(bufReader)
+
+	iniFile, err := ini.Load(proxyReader)
 	if err != nil {
 		return nil, err
 	}
 
 	categories := make(map[string]Category)
 
-	for key, value := range file["Category"] {
+	for key, value := range iniFile["Category"] {
 		newCategory, err := getCategory(value)
 		if err != nil {
 			return nil, err
@@ -70,6 +88,7 @@ func LoadCatverIni(fileName string) (map[string]Category, error) {
 		categories[key] = *newCategory
 	}
 
-	log.Printf("Loaded %s in %s", fileName, time.Since(startTime))
+	bar.Finish()
+
 	return categories, nil
 }

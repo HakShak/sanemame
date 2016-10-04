@@ -6,8 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"time"
 )
+
+import "gopkg.in/cheggaaa/pb.v1"
 
 type ControlsGame struct {
 	RomName     string `xml:"romname,attr"`
@@ -21,16 +22,25 @@ type ControlsGame struct {
 }
 
 func LoadControlsXml(filename string) (map[string]ControlsGame, error) {
-	startTime := time.Now()
 	log.Printf("Loading %s", filename)
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	bar := pb.New(int(info.Size())).SetUnits(pb.U_BYTES).SetWidth(80).Start()
+	bar.ShowSpeed = true
+
 	bufReader := bufio.NewReader(file)
 
-	decoder := xml.NewDecoder(bufReader)
+	proxyReader := bar.NewProxyReader(bufReader)
+
+	decoder := xml.NewDecoder(proxyReader)
 
 	loaded := make(map[string]ControlsGame)
 
@@ -62,6 +72,6 @@ func LoadControlsXml(filename string) (map[string]ControlsGame, error) {
 		}
 	}
 
-	log.Printf("%s loaded in %s", filename, time.Since(startTime))
+	bar.Finish()
 	return loaded, nil
 }

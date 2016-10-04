@@ -1,13 +1,15 @@
 package mamexml
 
 import (
+	"bufio"
 	"log"
+	"os"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 import "github.com/vaughan0/go-ini"
+import "gopkg.in/cheggaaa/pb.v1"
 
 type NPlayer struct {
 	Raw        string
@@ -39,15 +41,32 @@ func getPlayerType(value string) ([]NPlayer, error) {
 
 func LoadNPlayersIni(fileName string) (map[string][]NPlayer, error) {
 	log.Printf("Loading %s", fileName)
-	startTime := time.Now()
-	file, err := ini.LoadFile(fileName)
+
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	bar := pb.New(int(info.Size())).SetUnits(pb.U_BYTES).SetWidth(80).Start()
+	bar.ShowSpeed = true
+
+	bufReader := bufio.NewReader(file)
+
+	proxyReader := bar.NewProxyReader(bufReader)
+
+	iniFile, err := ini.Load(proxyReader)
 	if err != nil {
 		return nil, err
 	}
 
 	nplayers := make(map[string][]NPlayer)
 
-	for key, value := range file["NPlayers"] {
+	for key, value := range iniFile["NPlayers"] {
 		newNPlayers, err := getPlayerType(value)
 		if err != nil {
 			return nil, err
@@ -56,6 +75,6 @@ func LoadNPlayersIni(fileName string) (map[string][]NPlayer, error) {
 		nplayers[key] = newNPlayers
 	}
 
-	log.Printf("Loaded %s in %s", fileName, time.Since(startTime))
+	bar.Finish()
 	return nplayers, nil
 }

@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/HakShak/sanemame/mamexml"
 	"github.com/spf13/cobra"
 	"log"
+	"os"
+	"text/tabwriter"
 )
 
 // categoriesCmd represents the categories command
@@ -17,7 +20,10 @@ var categoriesCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		log.Printf("Categorized: %d", len(categories))
+		tw := new(tabwriter.Writer)
+		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(tw, "Primary\tSecondary")
+		fmt.Fprintln(tw, "-------\t---------")
 
 		categorySet := make(map[string]map[string]bool)
 
@@ -29,18 +35,34 @@ var categoriesCmd = &cobra.Command{
 		}
 
 		for primary, secondarySet := range categorySet {
-			log.Println(primary)
 			for secondary, _ := range secondarySet {
 				if secondary != "" {
-					log.Printf("\t%s", secondary)
+					fmt.Fprintf(tw, "%s\t%s\n", primary, secondary)
 				}
 			}
 		}
+		fmt.Fprintln(tw)
+		tw.Flush()
+	},
+}
+
+var categoriesStatCmd = &cobra.Command{
+	Use:   "categories",
+	Short: "Stat Catver.ini",
+	Long:  `Load stats from Catver.ini`,
+	Run: func(cmd *cobra.Command, args []string) {
+		categories, err := mamexml.LoadCatverIni("Catver.ini")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("Categorized: %d", len(categories))
 	},
 }
 
 func init() {
 	listCmd.AddCommand(categoriesCmd)
+	statCmd.AddCommand(categoriesStatCmd)
 
 	// Here you will define your flags and configuration settings.
 
