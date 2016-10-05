@@ -47,28 +47,15 @@ to quickly create a Cobra application.`,
 			log.Fatal(err)
 		}
 
-		controlTypes := make(map[string][]string)
+		controlList := make(map[string]map[string]bool)
 
 		for _, game := range controls {
 			for _, player := range game.PlayerControls {
 				for _, control := range player.Controls {
-					if _, ok := controlTypes[control.Constant.Name]; !ok {
-						controlTypes[control.Constant.Name] = []string{control.Name}
-					} else {
-						descriptions := controlTypes[control.Constant.Name]
-						recorded := false
-						for _, description := range descriptions {
-							if control.Name == description {
-								recorded = true
-							}
-						}
-
-						if recorded {
-							break
-						}
-
-						controlTypes[control.Constant.Name] = append(descriptions, control.Name)
+					if _, ok := controlList[control.Constant.Name]; !ok {
+						controlList[control.Constant.Name] = make(map[string]bool)
 					}
+					controlList[control.Constant.Name][control.Name] = true
 				}
 			}
 		}
@@ -78,8 +65,8 @@ to quickly create a Cobra application.`,
 		fmt.Fprintln(tw, "Keyword\tDescription")
 		fmt.Fprintln(tw, "-------\t-----------")
 
-		for keyword, descriptions := range controlTypes {
-			for _, description := range descriptions {
+		for keyword, descriptions := range controlList {
+			for description, _ := range descriptions {
 				fmt.Fprintf(tw, "%s\t%v\n", keyword, description)
 			}
 		}
