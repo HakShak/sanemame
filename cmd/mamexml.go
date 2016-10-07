@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 import "github.com/HakShak/sanemame/mamexml"
@@ -19,7 +20,9 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		filename, err := mamexml.GetLatestXmlFile()
+		api := viper.GetString(GithubReleasesApi)
+		repo := viper.GetString(MameRepo)
+		filename, err := mamexml.GetLatestXmlFile(api, repo)
 		if err != nil {
 			log.Fatal(err)
 		}

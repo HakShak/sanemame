@@ -13,9 +13,7 @@ import (
 	"time"
 )
 
-import "github.com/spf13/viper"
 import "gopkg.in/cheggaaa/pb.v1"
-import "github.com/HakShak/sanemame/config"
 
 type Asset struct {
 	Name        string `json:"name"`
@@ -32,11 +30,9 @@ type Release struct {
 	Assets  []Asset `json:"assets"`
 }
 
-func GetReleases() ([]Release, error) {
+func GetReleases(api string, repo string) ([]Release, error) {
 	startTime := time.Now()
-	mameRepo := viper.GetString(config.MameRepo)
-	githubApi := viper.GetString(config.GithubReleasesApi)
-	url := fmt.Sprintf(githubApi, mameRepo)
+	url := fmt.Sprintf(api, repo)
 	log.Printf("Getting releases from %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -57,8 +53,8 @@ func GetReleases() ([]Release, error) {
 	return releases, nil
 }
 
-func GetLatestRelease() (*Release, error) {
-	releases, err := GetReleases()
+func GetLatestRelease(api string, repo string) (*Release, error) {
+	releases, err := GetReleases(api, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +68,8 @@ func GetLatestRelease() (*Release, error) {
 	return &releases[0], nil
 }
 
-func GetLatestXmlAsset() (*Asset, error) {
-	release, err := GetLatestRelease()
+func GetLatestXmlAsset(api string, repo string) (*Asset, error) {
+	release, err := GetLatestRelease(api, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -155,8 +151,8 @@ func ExtractAsset(zipFileName string) (string, error) {
 	return "", nil
 }
 
-func GetLatestXmlFile() (string, error) {
-	asset, err := GetLatestXmlAsset()
+func GetLatestXmlFile(api string, repo string) (string, error) {
+	asset, err := GetLatestXmlAsset(api, repo)
 	if err != nil {
 		return "", err
 	}
