@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/HakShak/sanemame/db"
 	"github.com/HakShak/sanemame/mamexml"
+	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 	"os"
 	"text/tabwriter"
@@ -15,32 +18,24 @@ var categoriesCmd = &cobra.Command{
 	Short: "List categories from Catver.ini",
 	Long:  `Load and list the set of categories from Catver.ini`,
 	Run: func(cmd *cobra.Command, args []string) {
-		categories, err := mamexml.LoadCatverIni("Catver.ini")
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
+
+		categories := db.GetCategories(boltDb)
 
 		tw := new(tabwriter.Writer)
 		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "Primary\tSecondary")
-		fmt.Fprintln(tw, "-------\t---------")
-
-		categorySet := make(map[string]map[string]bool)
+		fmt.Fprintln(tw, "Category")
+		fmt.Fprintln(tw, "--------")
 
 		for _, category := range categories {
-			if _, ok := categorySet[category.Primary]; !ok {
-				categorySet[category.Primary] = make(map[string]bool)
-			}
-			categorySet[category.Primary][category.Secondary] = category.Mature
+			fmt.Fprintf(tw, "%s\n", category)
 		}
 
-		for primary, secondarySet := range categorySet {
-			for secondary, _ := range secondarySet {
-				if secondary != "" {
-					fmt.Fprintf(tw, "%s\t%s\n", primary, secondary)
-				}
-			}
-		}
 		fmt.Fprintln(tw)
 		tw.Flush()
 	},

@@ -32,6 +32,7 @@ func Execute() {
 
 const MameRepo = "mame.repo"
 const GithubReleasesApi = "github.api.releases"
+const DatabaseLocation = "db.path"
 
 func init() {
 	cobra.OnInitialize(initConfig)
@@ -47,6 +48,7 @@ func init() {
 
 	viper.SetDefault(MameRepo, "mamedev/mame")
 	viper.SetDefault(GithubReleasesApi, "https://api.github.com/repos/%s/releases")
+	viper.SetDefault(DatabaseLocation, "sanemame.db")
 	log.SetFlags(0)
 }
 
