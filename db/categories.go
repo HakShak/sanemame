@@ -50,20 +50,5 @@ func UpdateCategories(db *bolt.DB, fileName string) {
 }
 
 func GetCategories(db *bolt.DB) []string {
-	var result []string
-	err := db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(CategoryMachines))
-
-		bucket.ForEach(func(k, v []byte) error {
-			result = append(result, string(k))
-			return nil
-		})
-
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return result
+	return GetAllKeys(db, CategoryMachines)
 }

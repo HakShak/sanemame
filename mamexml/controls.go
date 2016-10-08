@@ -10,6 +10,11 @@ import (
 
 import "gopkg.in/cheggaaa/pb.v1"
 
+type ControlsName struct {
+	Name        string
+	Description string
+}
+
 type ControlsConstant struct {
 	Name string `xml:"name,attr"`
 }
@@ -33,6 +38,16 @@ type ControlsGame struct {
 	Tilt           bool             `xml:"tilt,attr"`
 	Cocktail       bool             `xml:"cocktail,attr"`
 	PlayerControls []ControlsPlayer `xml:"player"`
+}
+
+func GetControlsNames(controlGame ControlsGame) []ControlsName {
+	var result []ControlsName
+	for _, playerControl := range controlGame.PlayerControls {
+		for _, control := range playerControl.Controls {
+			result = append(result, ControlsName{control.Constant.Name, control.Name})
+		}
+	}
+	return result
 }
 
 func LoadControlsXml(filename string) (map[string]ControlsGame, error) {

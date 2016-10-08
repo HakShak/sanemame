@@ -28,6 +28,7 @@ to quickly create a Cobra application.`,
 		defer boltDb.Close()
 
 		db.UpdateCategories(boltDb, "Catver.ini")
+		db.UpdateControls(boltDb, "controls.xml")
 	},
 }
 

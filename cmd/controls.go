@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/HakShak/sanemame/db"
+	"github.com/HakShak/sanemame/mamexml"
+	"github.com/boltdb/bolt"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 	"os"
 	"text/tabwriter"
-
-	"github.com/spf13/cobra"
 )
-
-import "github.com/HakShak/sanemame/mamexml"
 
 // controlsCmd represents the controls command
 var controlsCmd = &cobra.Command{
@@ -42,33 +43,22 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		controls, err := mamexml.LoadControlsXml("controls.xml")
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
 
-		controlList := make(map[string]map[string]bool)
-
-		for _, game := range controls {
-			for _, player := range game.PlayerControls {
-				for _, control := range player.Controls {
-					if _, ok := controlList[control.Constant.Name]; !ok {
-						controlList[control.Constant.Name] = make(map[string]bool)
-					}
-					controlList[control.Constant.Name][control.Name] = true
-				}
-			}
-		}
+		controls := db.GetControlNames(boltDb)
 
 		tw := new(tabwriter.Writer)
 		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "Keyword\tDescription")
-		fmt.Fprintln(tw, "-------\t-----------")
+		fmt.Fprintln(tw, "Keyword\tNames")
+		fmt.Fprintln(tw, "-------\t-----")
 
-		for keyword, descriptions := range controlList {
-			for description, _ := range descriptions {
-				fmt.Fprintf(tw, "%s\t%v\n", keyword, description)
-			}
+		for control, desc := range controls {
+			fmt.Fprintf(tw, "%s\t%s\n", control, desc)
 		}
 
 		fmt.Fprintln(tw)
