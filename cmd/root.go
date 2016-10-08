@@ -30,8 +30,13 @@ func Execute() {
 	}
 }
 
+//MameRepo default config key
 const MameRepo = "mame.repo"
-const GithubReleasesApi = "github.api.releases"
+
+//GithubReleasesAPI default config key
+const GithubReleasesAPI = "github.api.releases"
+
+//DatabaseLocation default config key
 const DatabaseLocation = "db.path"
 
 func init() {
@@ -47,7 +52,7 @@ func init() {
 	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	viper.SetDefault(MameRepo, "mamedev/mame")
-	viper.SetDefault(GithubReleasesApi, "https://api.github.com/repos/%s/releases")
+	viper.SetDefault(GithubReleasesAPI, "https://api.github.com/repos/%s/releases")
 	viper.SetDefault(DatabaseLocation, "sanemame.db")
 	log.SetFlags(0)
 }

@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"text/tabwriter"
+
+	"github.com/spf13/cobra"
 )
 
 import "github.com/HakShak/sanemame/mamexml"
@@ -59,7 +60,7 @@ to quickly create a Cobra application.`,
 		fmt.Fprintln(tw, "Keyword")
 		fmt.Fprintln(tw, "-------")
 
-		for players, _ := range playerTypes {
+		for players := range playerTypes {
 			fmt.Fprintf(tw, "%s\n", players)
 		}
 

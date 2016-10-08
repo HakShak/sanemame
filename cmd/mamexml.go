@@ -20,7 +20,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		api := viper.GetString(GithubReleasesApi)
+		api := viper.GetString(GithubReleasesAPI)
 		repo := viper.GetString(MameRepo)
 		filename, err := mamexml.GetLatestXmlFile(api, repo)
 		if err != nil {
@@ -42,25 +42,25 @@ to quickly create a Cobra application.`,
 
 		for _, m := range machines {
 			if m.IsDevice {
-				devices += 1
+				devices++
 			}
 			if m.IsBios {
-				bios += 1
+				bios++
 			}
 			if m.IsRunnable {
-				runnable += 1
+				runnable++
 			}
 			if m.IsMechanical {
-				mechanical += 1
+				mechanical++
 			}
 			if m.CloneOf != "" {
-				clones += 1
+				clones++
 			}
 			if m.RomOf != "" {
-				roms += 1
+				roms++
 			}
 			if m.SampleOf != "" {
-				samples += 1
+				samples++
 			}
 		}
 
