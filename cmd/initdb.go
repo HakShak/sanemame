@@ -29,6 +29,7 @@ to quickly create a Cobra application.`,
 
 		db.UpdateCategories(boltDb, "Catver.ini")
 		db.UpdateControls(boltDb, "controls.xml")
+		db.UpdateNPlayers(boltDb, "nplayers.ini")
 	},
 }
 

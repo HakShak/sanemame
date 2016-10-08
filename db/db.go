@@ -1,10 +1,36 @@
 package db
 
 import (
-	"github.com/boltdb/bolt"
+	"errors"
+	"fmt"
 	"log"
+
+	"github.com/boltdb/bolt"
 )
 
+//NewPutBucketError formatting for create bucket errors
+func NewPutBucketError(bucketName string, key string, value string, err error) error {
+	msg := fmt.Sprintf("Putting %s in %s|%s failed: %s", value, bucketName, key, err)
+	return errors.New(msg)
+}
+
+//NewCreateBucketError formatting for create bucket errors
+func NewCreateBucketError(bucketName string, err error) error {
+	msg := fmt.Sprintf("Create bucket failed for %s: %s", bucketName, err)
+	return errors.New(msg)
+}
+
+//InList Test membership of list
+func InList(list []string, key string) bool {
+	for _, check := range list {
+		if check == key {
+			return true
+		}
+	}
+	return false
+}
+
+//GetAllKeys Helper to get all keys in a bucket
 func GetAllKeys(db *bolt.DB, bucket string) []string {
 	var result []string
 	err := db.View(func(tx *bolt.Tx) error {
@@ -24,6 +50,7 @@ func GetAllKeys(db *bolt.DB, bucket string) []string {
 	return result
 }
 
+//GetAll Helper to get all keys and values in a bucket
 func GetAll(db *bolt.DB, bucket string) map[string]string {
 	result := make(map[string]string)
 	err := db.View(func(tx *bolt.Tx) error {

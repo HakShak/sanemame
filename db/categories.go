@@ -2,13 +2,16 @@ package db
 
 import (
 	"encoding/json"
+	"log"
+
 	"github.com/HakShak/sanemame/mamexml"
 	"github.com/boltdb/bolt"
-	"log"
 )
 
+//CategoryMachines bucket name
 const CategoryMachines = "category-machines"
 
+//UpdateCategories populates categories from INI
 func UpdateCategories(db *bolt.DB, fileName string) {
 	categories, err := mamexml.LoadCatverIni(fileName)
 	if err != nil {
@@ -49,6 +52,7 @@ func UpdateCategories(db *bolt.DB, fileName string) {
 	}
 }
 
+//GetCategories returns all unqiue categories from boltdb
 func GetCategories(db *bolt.DB) []string {
 	return GetAllKeys(db, CategoryMachines)
 }

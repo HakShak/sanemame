@@ -2,23 +2,19 @@ package db
 
 import (
 	"encoding/json"
+	"log"
+
 	"github.com/HakShak/sanemame/mamexml"
 	"github.com/boltdb/bolt"
-	"log"
 )
 
+//ControlMachines bucket name
 const ControlMachines = "control-machines"
+
+//ControlNames bucket name
 const ControlNames = "control-names"
 
-func checkList(list []string, key string) bool {
-	for _, check := range list {
-		if check == key {
-			return true
-		}
-	}
-	return false
-}
-
+//UpdateControls Populates controls from XML into boltdb
 func UpdateControls(db *bolt.DB, fileName string) {
 	controls, err := mamexml.LoadControlsXml(fileName)
 	if err != nil {
@@ -30,10 +26,9 @@ func UpdateControls(db *bolt.DB, fileName string) {
 
 	for machine, controls := range controls {
 		for _, control := range mamexml.GetControlsNames(controls) {
-			if !checkList(controlNames[control.Name], control.Description) {
+			if !InList(controlNames[control.Name], control.Description) {
 				controlNames[control.Name] = append(controlNames[control.Name], control.Description)
 			}
-
 			controlMachines[control.Name] = append(controlMachines[control.Name], machine)
 		}
 	}
@@ -83,10 +78,12 @@ func UpdateControls(db *bolt.DB, fileName string) {
 	}
 }
 
+//GetControls returns unique control constants
 func GetControls(db *bolt.DB) []string {
 	return GetAllKeys(db, ControlNames)
 }
 
+//GetControlNames returns unique control constants with freesytle names
 func GetControlNames(db *bolt.DB) map[string]string {
 	return GetAll(db, ControlNames)
 }

@@ -6,10 +6,12 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/HakShak/sanemame/db"
+	"github.com/HakShak/sanemame/mamexml"
+	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-import "github.com/HakShak/sanemame/mamexml"
 
 // nplayersCmd represents the nplayers command
 var nplayersCmd = &cobra.Command{
@@ -42,26 +44,22 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		nplayers, err := mamexml.LoadNPlayersIni("nplayers.ini")
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
 
-		playerTypes := make(map[string]bool)
-
-		for _, players := range nplayers {
-			for _, player := range players {
-				playerTypes[player.Raw] = true
-			}
-		}
+		nplayers := db.GetNPlayerRawKeys(boltDb)
 
 		tw := new(tabwriter.Writer)
 		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(tw, "Keyword")
 		fmt.Fprintln(tw, "-------")
 
-		for players := range playerTypes {
-			fmt.Fprintf(tw, "%s\n", players)
+		for _, raw := range nplayers {
+			fmt.Fprintf(tw, "%s\n", raw)
 		}
 
 		fmt.Fprintln(tw)
