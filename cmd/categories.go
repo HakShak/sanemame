@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"text/tabwriter"
+
 	"github.com/HakShak/sanemame/db"
 	"github.com/HakShak/sanemame/mamexml"
 	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
-	"os"
-	"text/tabwriter"
 )
 
 // categoriesCmd represents the categories command
