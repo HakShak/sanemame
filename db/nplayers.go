@@ -1,10 +1,9 @@
 package db
 
 import (
-	"encoding/json"
 	"log"
 
-	"github.com/HakShak/sanemame/mamexml"
+	"github.com/HakShak/sanemame/filetypes/nplayersini"
 	"github.com/boltdb/bolt"
 )
 
@@ -17,95 +16,40 @@ const NPlayerTypeMachines = "nplayertype-machines"
 //NPlayerRawMachines bucket name
 const NPlayerRawMachines = "nplayerraw-machines"
 
-func appendMapListOnce(theMap map[string][]string, key string, value string) {
-	if !InList(theMap[key], value) {
-		theMap[key] = append(theMap[key], value)
-	}
-}
-
 //UpdateNPlayers populate nplayers data from INI
 func UpdateNPlayers(db *bolt.DB, fileName string) {
-	nplayers, err := mamexml.LoadNPlayersIni(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
+	CreateBuckets(db, []string{
+		NPlayerMachines,
+		NPlayerRawMachines,
+		NPlayerTypeMachines,
+	})
 
 	nplayerMachines := make(map[string][]string)
 	nplayerTypeMachines := make(map[string][]string)
 	nplayerRawMachines := make(map[string][]string)
 
-	for machine, nplayer := range nplayers {
-		for _, player := range nplayer {
-			appendMapListOnce(nplayerMachines, string(player.Players), machine)
-			if len(player.PlayerType) > 0 {
-				appendMapListOnce(nplayerTypeMachines, player.PlayerType, machine)
-			}
-			appendMapListOnce(nplayerRawMachines, player.Raw, machine)
-		}
-	}
-
-	err = db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(NPlayerMachines))
-		if err != nil {
-			return NewCreateBucketError(NPlayerMachines, err)
-		}
-
-		for playerCount, machineList := range nplayerMachines {
-			machineListBytes, err := json.Marshal(machineList)
-			if err != nil {
-				return err
-			}
-			err = bucket.Put([]byte(playerCount), machineListBytes)
-			if err != nil {
-				return NewPutBucketError(NPlayerMachines, playerCount, string(machineListBytes), err)
-			}
-		}
-		return nil
-	})
+	err := nplayersini.Load(fileName, nplayersini.EntryRead(
+		func(machine string, nplayer *nplayersini.NPlayer) error {
+			nplayerRawMachines[nplayer.Raw] = append(nplayerRawMachines[nplayer.Raw], machine)
+			nplayerTypeMachines[nplayer.PlayerType] = append(nplayerTypeMachines[nplayer.PlayerType], machine)
+			nplayerMachines[string(nplayer.Players)] = append(nplayerMachines[string(nplayer.Players)], machine)
+			return nil
+		}))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(NPlayerTypeMachines))
-		if err != nil {
-			return NewCreateBucketError(NPlayerTypeMachines, err)
-		}
-
-		for playerType, machineList := range nplayerTypeMachines {
-			machineListBytes, err := json.Marshal(machineList)
-			if err != nil {
-				return err
-			}
-			err = bucket.Put([]byte(playerType), machineListBytes)
-			if err != nil {
-				return NewPutBucketError(NPlayerTypeMachines, playerType, string(machineListBytes), err)
-			}
-		}
-		return nil
-	})
+	err = UpdateStringList(db, NPlayerMachines, nplayerMachines)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(NPlayerRawMachines))
-		if err != nil {
-			return NewCreateBucketError(NPlayerRawMachines, err)
-		}
+	err = UpdateStringList(db, NPlayerRawMachines, nplayerRawMachines)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		for playerRaw, machineList := range nplayerRawMachines {
-			machineListBytes, err := json.Marshal(machineList)
-			if err != nil {
-				return err
-			}
-			err = bucket.Put([]byte(playerRaw), machineListBytes)
-			if err != nil {
-				return NewPutBucketError(NPlayerRawMachines, playerRaw, string(machineListBytes), err)
-			}
-		}
-		return nil
-	})
+	err = UpdateStringList(db, NPlayerTypeMachines, nplayerTypeMachines)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,4 +58,19 @@ func UpdateNPlayers(db *bolt.DB, fileName string) {
 //GetNPlayerRawKeys returns all unique nplayer raw keys
 func GetNPlayerRawKeys(db *bolt.DB) []string {
 	return GetAllKeys(db, NPlayerRawMachines)
+}
+
+//GetNPlayerMachines returns machines by player count
+func GetNPlayerMachines(db *bolt.DB) map[string][]string {
+	return GetAllLists(db, NPlayerMachines)
+}
+
+//GetNPlayerRawMachines returns machines by raw nplayer notation
+func GetNPlayerRawMachines(db *bolt.DB) map[string][]string {
+	return GetAllLists(db, NPlayerRawMachines)
+}
+
+//GetNPlayerTypeMachines returns machines by player type
+func GetNPlayerTypeMachines(db *bolt.DB) map[string][]string {
+	return GetAllLists(db, NPlayerTypeMachines)
 }

@@ -59,15 +59,15 @@ var categoriesStatCmd = &cobra.Command{
 		fmt.Fprintln(tw, "----\t-----\t--------")
 
 		rawCategories := db.GetRawCategoryMachines(boltDb)
-		rawMachines := uniqueMachines(rawCategories)
+		rawMachines := db.UniqueStrings(rawCategories)
 		fmt.Fprintf(tw, "Raw\t%d\t%d\n", len(rawCategories), len(rawMachines))
 
 		primaryCategories := db.GetPrimaryCategoryMachines(boltDb)
-		primaryMachines := uniqueMachines(primaryCategories)
+		primaryMachines := db.UniqueStrings(primaryCategories)
 		fmt.Fprintf(tw, "Primary\t%d\t%d\n", len(primaryCategories), len(primaryMachines))
 
 		secondaryCategories := db.GetSecondaryCategoryMachines(boltDb)
-		secondaryMachines := uniqueMachines(secondaryCategories)
+		secondaryMachines := db.UniqueStrings(secondaryCategories)
 		fmt.Fprintf(tw, "Secondary\t%d\t%d\n", len(secondaryCategories), len(secondaryMachines))
 
 		matureMachines := rawCategories[db.MatureCategory]
@@ -76,17 +76,6 @@ var categoriesStatCmd = &cobra.Command{
 		fmt.Fprintln(tw)
 		tw.Flush()
 	},
-}
-
-func uniqueMachines(categories map[string][]string) map[string]bool {
-	result := make(map[string]bool)
-	for _, machines := range categories {
-		for _, machine := range machines {
-			result[machine] = true
-		}
-	}
-
-	return result
 }
 
 func init() {

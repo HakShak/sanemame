@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/HakShak/sanemame/db"
-	"github.com/HakShak/sanemame/mamexml"
 	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,13 +23,33 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		nplayers, err := mamexml.LoadNPlayersIni("nplayers.ini")
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
 
-		log.Printf("NPlayers: %d", len(nplayers))
+		nPlayers := db.GetNPlayerMachines(boltDb)
+		nPlayerMachines := db.UniqueStrings(nPlayers)
 
+		nPlayerTypes := db.GetNPlayerTypeMachines(boltDb)
+		nPlayerTypeMachines := db.UniqueStrings(nPlayerTypes)
+
+		nPlayerRaw := db.GetNPlayerRawMachines(boltDb)
+		nPlayerRawMachines := db.UniqueStrings(nPlayerRaw)
+
+		tw := new(tabwriter.Writer)
+		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(tw, "Unit\tCount\tMachines")
+		fmt.Fprintln(tw, "----\t-----\t--------")
+
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Players", len(nPlayers), len(nPlayerMachines))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Types", len(nPlayerTypes), len(nPlayerTypeMachines))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Raw", len(nPlayerRaw), len(nPlayerRawMachines))
+
+		fmt.Fprintln(tw)
+		tw.Flush()
 	},
 }
 
