@@ -7,7 +7,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/HakShak/sanemame/db"
-	"github.com/HakShak/sanemame/mamexml"
 	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,7 +25,7 @@ var categoriesCmd = &cobra.Command{
 		}
 		defer boltDb.Close()
 
-		categories := db.GetCategories(boltDb)
+		categories := db.GetRawCategories(boltDb)
 
 		tw := new(tabwriter.Writer)
 		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
@@ -47,13 +46,47 @@ var categoriesStatCmd = &cobra.Command{
 	Short: "Stat Catver.ini",
 	Long:  `Load stats from Catver.ini`,
 	Run: func(cmd *cobra.Command, args []string) {
-		categories, err := mamexml.LoadCatverIni("Catver.ini")
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
 
-		log.Printf("Categorized: %d", len(categories))
+		tw := new(tabwriter.Writer)
+		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(tw, "Type\tCount\tMachines")
+		fmt.Fprintln(tw, "----\t-----\t--------")
+
+		rawCategories := db.GetRawCategoryMachines(boltDb)
+		rawMachines := uniqueMachines(rawCategories)
+		fmt.Fprintf(tw, "Raw\t%d\t%d\n", len(rawCategories), len(rawMachines))
+
+		primaryCategories := db.GetPrimaryCategoryMachines(boltDb)
+		primaryMachines := uniqueMachines(primaryCategories)
+		fmt.Fprintf(tw, "Primary\t%d\t%d\n", len(primaryCategories), len(primaryMachines))
+
+		secondaryCategories := db.GetSecondaryCategoryMachines(boltDb)
+		secondaryMachines := uniqueMachines(secondaryCategories)
+		fmt.Fprintf(tw, "Secondary\t%d\t%d\n", len(secondaryCategories), len(secondaryMachines))
+
+		matureMachines := rawCategories[db.MatureCategory]
+		fmt.Fprintf(tw, "Mature\t%d\t%d\n", 1, len(matureMachines))
+
+		fmt.Fprintln(tw)
+		tw.Flush()
 	},
+}
+
+func uniqueMachines(categories map[string][]string) map[string]bool {
+	result := make(map[string]bool)
+	for _, machines := range categories {
+		for _, machine := range machines {
+			result[machine] = true
+		}
+	}
+
+	return result
 }
 
 func init() {

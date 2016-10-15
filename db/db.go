@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -61,6 +62,30 @@ func GetAll(db *bolt.DB, bucket string) map[string]string {
 			return nil
 		})
 
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result
+}
+
+//GetAllLists Helper to get all lists in a bucket
+func GetAllLists(db *bolt.DB, bucket string) map[string][]string {
+	result := make(map[string][]string)
+	err := db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(bucket))
+
+		bucket.ForEach(func(k, v []byte) error {
+			var newList []string
+			err := json.Unmarshal(v, &newList)
+			result[string(k)] = newList
+			if err != nil {
+				log.Fatal(err)
+			}
+			return nil
+		})
 		return nil
 	})
 	if err != nil {
