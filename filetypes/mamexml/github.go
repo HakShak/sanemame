@@ -15,21 +15,24 @@ import (
 
 import "gopkg.in/cheggaaa/pb.v1"
 
+//Asset artifacts from a release
 type Asset struct {
 	Name        string `json:"name"`
 	ContentType string `json:"content_type"`
 	Size        int    `json:"size"`
 	Created     string `json:"created_at"`
 	Updated     string `json:"updated_at"`
-	Url         string `json:"browser_download_url"`
+	URL         string `json:"browser_download_url"`
 }
 
+//Release top level object for releases
 type Release struct {
 	Name    string  `json:"name"`
 	TagName string  `json:"tag_name"`
 	Assets  []Asset `json:"assets"`
 }
 
+//GetReleases returns first page of releases
 func GetReleases(api string, repo string) ([]Release, error) {
 	startTime := time.Now()
 	url := fmt.Sprintf(api, repo)
@@ -41,7 +44,7 @@ func GetReleases(api string, repo string) ([]Release, error) {
 
 	defer resp.Body.Close()
 
-	releases := make([]Release, 0)
+	var releases []Release
 
 	err = json.NewDecoder(resp.Body).Decode(&releases)
 	if err != nil {
@@ -53,6 +56,7 @@ func GetReleases(api string, repo string) ([]Release, error) {
 	return releases, nil
 }
 
+//GetLatestRelease returns latest release
 func GetLatestRelease(api string, repo string) (*Release, error) {
 	releases, err := GetReleases(api, repo)
 	if err != nil {
@@ -68,7 +72,8 @@ func GetLatestRelease(api string, repo string) (*Release, error) {
 	return &releases[0], nil
 }
 
-func GetLatestXmlAsset(api string, repo string) (*Asset, error) {
+//GetLatestXMLAsset returns info for most recent artifact
+func GetLatestXMLAsset(api string, repo string) (*Asset, error) {
 	release, err := GetLatestRelease(api, repo)
 	if err != nil {
 		return nil, err
@@ -85,6 +90,7 @@ func GetLatestXmlAsset(api string, repo string) (*Asset, error) {
 	return nil, nil
 }
 
+//Download downloads url to filename
 func Download(fileName string, url string, size int) error {
 	log.Printf("Creating %s", fileName)
 	out, err := os.Create(fileName)
@@ -113,6 +119,7 @@ func Download(fileName string, url string, size int) error {
 	return nil
 }
 
+//ExtractAsset extracts compressed assest
 func ExtractAsset(zipFileName string) (string, error) {
 	zipReader, err := zip.OpenReader(zipFileName)
 	if err != nil {
@@ -151,14 +158,15 @@ func ExtractAsset(zipFileName string) (string, error) {
 	return "", nil
 }
 
-func GetLatestXmlFile(api string, repo string) (string, error) {
-	asset, err := GetLatestXmlAsset(api, repo)
+//GetLatestXMLFile finds, downloads, extracts latest release asset
+func GetLatestXMLFile(api string, repo string) (string, error) {
+	asset, err := GetLatestXMLAsset(api, repo)
 	if err != nil {
 		return "", err
 	}
 
 	if _, err := os.Stat(asset.Name); os.IsNotExist(err) {
-		err := Download(asset.Name, asset.Url, asset.Size)
+		err := Download(asset.Name, asset.URL, asset.Size)
 		if err != nil {
 			return "", err
 		}

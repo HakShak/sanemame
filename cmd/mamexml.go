@@ -1,13 +1,16 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"text/tabwriter"
 
+	"github.com/HakShak/sanemame/db"
+	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-import "github.com/HakShak/sanemame/mamexml"
 
 // mamexmlCmd represents the mamexml command
 var mamexmlCmd = &cobra.Command{
@@ -20,62 +23,36 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		api := viper.GetString(GithubReleasesAPI)
-		repo := viper.GetString(MameRepo)
-		filename, err := mamexml.GetLatestXmlFile(api, repo)
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
 
-		machines, err := mamexml.Load(filename)
-		if err != nil {
-			log.Fatal(err)
-		}
+		driverStatus := db.GetDriverStatusMachines(boltDb)
+		booleanState := db.GetBooleanMachines(boltDb)
 
-		devices := 0
-		bios := 0
-		runnable := 0
-		mechanical := 0
-		clones := 0
-		roms := 0
-		samples := 0
+		tw := new(tabwriter.Writer)
+		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(tw, "Type\tCount\tMachines")
+		fmt.Fprintln(tw, "----\t-----\t--------")
 
-		for _, m := range machines {
-			if m.IsDevice {
-				devices++
-			}
-			if m.IsBios {
-				bios++
-			}
-			if m.IsRunnable {
-				runnable++
-			}
-			if m.IsMechanical {
-				mechanical++
-			}
-			if m.CloneOf != "" {
-				clones++
-			}
-			if m.RomOf != "" {
-				roms++
-			}
-			if m.SampleOf != "" {
-				samples++
-			}
-		}
+		driverMachines := db.UniqueStrings(driverStatus)
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Driver Statuses", len(driverStatus), len(driverMachines))
 
-		log.Printf("Machines: %d", len(machines))
-		log.Printf("Devices: %d", devices)
-		log.Printf("Bios: %d", bios)
-		log.Printf("Runnable: %d", runnable)
-		log.Printf("Mechanical: %d", mechanical)
-		log.Printf("Clones: %d", clones)
-		log.Printf("Samples: %d", samples)
-		log.Printf("Roms: %d", roms)
-		potential := len(machines) - devices - bios - mechanical
-		log.Printf("Potential: %d", potential)
-		nonClones := runnable - clones
-		log.Printf("NonClones: %d", nonClones)
+		booleanMachines := db.UniqueStrings(booleanState)
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Boolean States", len(booleanState), len(booleanMachines))
+
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Devices", 1, len(booleanState["IsDevice"]))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Bios", 1, len(booleanState["IsBios"]))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Runnable", 1, len(booleanState["IsRunnable"]))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Mechanical", 1, len(booleanState["IsMechanical"]))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Clones", 1, len(booleanState["IsClone"]))
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Samples", 1, len(booleanState["IsSample"]))
+
+		fmt.Fprintln(tw)
+		tw.Flush()
 	},
 }
 

@@ -2,8 +2,12 @@ package cmd
 
 import (
 	"log"
+	"os"
+
+	"github.com/dustin/go-humanize"
 
 	"github.com/HakShak/sanemame/db"
+	"github.com/HakShak/sanemame/filetypes/mamexml"
 	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +34,24 @@ to quickly create a Cobra application.`,
 		db.UpdateCategories(boltDb, "Catver.ini")
 		db.UpdateControls(boltDb, "controls.xml")
 		db.UpdateNPlayers(boltDb, "nplayers.ini")
+
+		fileName, err := mamexml.GetLatestXMLFile(
+			viper.GetString(GithubReleasesAPI),
+			viper.GetString(MameRepo))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		db.UpdateMachines(boltDb, fileName)
+
+		fileInfo, err := os.Stat(dbPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		humanSize := humanize.Bytes(uint64(fileInfo.Size()))
+
+		log.Printf("Database Size: %s", humanSize)
 	},
 }
 
