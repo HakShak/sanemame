@@ -1,33 +1,34 @@
-package mamexml
+package controlsxml
 
 import (
-	"bufio"
 	"encoding/xml"
-	"io"
-	"log"
-	"os"
+
+	mxml "github.com/HakShak/sanemame/filetypes/xml"
 )
 
-import "gopkg.in/cheggaaa/pb.v1"
-
+//ControlsName Human description of control
 type ControlsName struct {
 	Name        string
 	Description string
 }
 
+//ControlsConstant holds ControlsName
 type ControlsConstant struct {
 	Name string `xml:"name,attr"`
 }
 
+//ControlsControl Why is this structured this way?
 type ControlsControl struct {
 	Name     string           `xml:"name,attr"`
 	Constant ControlsConstant `xml:"constant"`
 }
 
+//ControlsPlayer I give up
 type ControlsPlayer struct {
 	Controls []ControlsControl `xml:"controls>control"`
 }
 
+//ControlsGame all control related to a game element
 type ControlsGame struct {
 	RomName        string           `xml:"romname,attr"`
 	GameName       string           `xml:"gamename,attr"`
@@ -40,6 +41,7 @@ type ControlsGame struct {
 	PlayerControls []ControlsPlayer `xml:"player"`
 }
 
+//GetControlsNames find all names for a certain constant
 func GetControlsNames(controlGame ControlsGame) []ControlsName {
 	var result []ControlsName
 	for _, playerControl := range controlGame.PlayerControls {
@@ -50,57 +52,29 @@ func GetControlsNames(controlGame ControlsGame) []ControlsName {
 	return result
 }
 
-func LoadControlsXml(filename string) (map[string]ControlsGame, error) {
-	log.Printf("Loading %s", filename)
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
+//EntryRead callback signature
+type EntryRead func(controls *ControlsGame) error
 
-	info, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	bar := pb.New(int(info.Size())).SetUnits(pb.U_BYTES).SetWidth(80).Start()
-	bar.ShowSpeed = true
-
-	bufReader := bufio.NewReader(file)
-
-	proxyReader := bar.NewProxyReader(bufReader)
-
-	decoder := xml.NewDecoder(proxyReader)
-
-	loaded := make(map[string]ControlsGame)
-
-	for {
-		token, err := decoder.Token()
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		if token == nil {
-			break
-		}
-
-		switch startElement := token.(type) {
-		case xml.StartElement:
-			if startElement.Name.Local == "game" {
+//Load process all control elements
+func Load(fileName string, callback EntryRead) error {
+	err := mxml.Load(fileName, mxml.ElementLoad(
+		func(decoder *xml.Decoder, element *xml.StartElement) error {
+			if element.Name.Local == "game" {
 				var cg ControlsGame
-				err := decoder.DecodeElement(&cg, &startElement)
+				err := decoder.DecodeElement(&cg, element)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
-				loaded[cg.RomName] = cg
+				err = callback(&cg)
+				if err != nil {
+					return err
+				}
 			}
-		}
+			return nil
+		}))
+	if err != nil {
+		return err
 	}
-
-	bar.Finish()
-	return loaded, nil
+	return nil
 }

@@ -2,14 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/HakShak/sanemame/db"
-	"github.com/HakShak/sanemame/mamexml"
-	"github.com/boltdb/bolt"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"text/tabwriter"
+
+	"github.com/HakShak/sanemame/db"
+	"github.com/boltdb/bolt"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // controlsCmd represents the controls command
@@ -23,12 +23,25 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		controls, err := mamexml.LoadControlsXml("controls.xml")
+		dbPath := viper.GetString(DatabaseLocation)
+		boltDb, err := bolt.Open(dbPath, 0600, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer boltDb.Close()
 
-		log.Printf("Controls: %d", len(controls))
+		controls := db.GetControlMachines(boltDb)
+		controlMachines := db.UniqueStrings(controls)
+
+		tw := new(tabwriter.Writer)
+		tw.Init(os.Stdout, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(tw, "Type\tCount\tMachines")
+		fmt.Fprintln(tw, "----\t-----\t--------")
+
+		fmt.Fprintf(tw, "%s\t%d\t%d\n", "Controls", len(controls), len(controlMachines))
+
+		fmt.Fprintln(tw)
+		tw.Flush()
 
 	},
 }

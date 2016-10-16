@@ -41,7 +41,7 @@ type EntryRead func(machine string, nplayer *NPlayer) error
 
 //Load ini with callback for processing
 func Load(fileName string, callback EntryRead) error {
-	ini.Load(fileName,
+	err := ini.Load(fileName,
 		ini.EntryRead(func(section, key, value string) error {
 			if section != "NPlayers" {
 				return nil
@@ -61,6 +61,8 @@ func Load(fileName string, callback EntryRead) error {
 
 			return nil
 		}))
-
+	if err != nil {
+		return err
+	}
 	return nil
 }
