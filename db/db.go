@@ -11,6 +11,12 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+//NewBucketNotFoundError formatting for missing bucket
+func NewBucketNotFoundError(bucketName string) error {
+	msg := fmt.Sprintf("Bucket not found: %s", bucketName)
+	return errors.New(msg)
+}
+
 //NewPutBucketError formatting for create bucket errors
 func NewPutBucketError(bucketName string, key string, value string, err error) error {
 	msg := fmt.Sprintf("Putting %s in %s|%s failed: %s", value, bucketName, key, err)
@@ -48,8 +54,7 @@ func UpdateStringList(db *bolt.DB, bucketName string, data map[string][]string) 
 	err := db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bucketName))
 		if bucket == nil {
-			msg := fmt.Sprintf("Bucket not found: %s", bucketName)
-			return errors.New(msg)
+			return NewBucketNotFoundError(bucketName)
 		}
 
 		for key, listValues := range data {
@@ -85,10 +90,13 @@ func InList(list []string, key string) bool {
 }
 
 //GetAllKeys Helper to get all keys in a bucket
-func GetAllKeys(db *bolt.DB, bucket string) []string {
+func GetAllKeys(db *bolt.DB, bucketName string) []string {
 	var result []string
 	err := db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucket))
+		bucket := tx.Bucket([]byte(bucketName))
+		if bucket == nil {
+			return NewBucketNotFoundError(bucketName)
+		}
 
 		bucket.ForEach(func(k, v []byte) error {
 			result = append(result, string(k))
@@ -105,10 +113,13 @@ func GetAllKeys(db *bolt.DB, bucket string) []string {
 }
 
 //GetAll Helper to get all keys and values in a bucket
-func GetAll(db *bolt.DB, bucket string) map[string]string {
+func GetAll(db *bolt.DB, bucketName string) map[string]string {
 	result := make(map[string]string)
 	err := db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucket))
+		bucket := tx.Bucket([]byte(bucketName))
+		if bucket == nil {
+			return NewBucketNotFoundError(bucketName)
+		}
 
 		bucket.ForEach(func(k, v []byte) error {
 			result[string(k)] = string(v)
@@ -125,10 +136,13 @@ func GetAll(db *bolt.DB, bucket string) map[string]string {
 }
 
 //GetAllLists Helper to get all lists in a bucket
-func GetAllLists(db *bolt.DB, bucket string) map[string][]string {
+func GetAllLists(db *bolt.DB, bucketName string) map[string][]string {
 	result := make(map[string][]string)
 	err := db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bucket))
+		bucket := tx.Bucket([]byte(bucketName))
+		if bucket == nil {
+			return NewBucketNotFoundError(bucketName)
+		}
 
 		bucket.ForEach(func(k, v []byte) error {
 			var newList []string
